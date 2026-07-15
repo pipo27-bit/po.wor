@@ -5,10 +5,11 @@
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
-const FEED_URL = 'log.json';
-const LS_OVERRIDES = 'po.wor:overrides';
-const LS_DELETED = 'po.wor:deleted';
-const LS_EDIT_MODE = 'po.wor:editMode';
+const STORAGE_NS = document.body.dataset.storage || 'log';
+const FEED_URL = document.body.dataset.feed || 'log.json';
+const LS_OVERRIDES = `po.wor:${STORAGE_NS}:overrides`;
+const LS_DELETED = `po.wor:${STORAGE_NS}:deleted`;
+const LS_EDIT_MODE = `po.wor:${STORAGE_NS}:editMode`;
 
 let baseEntries = [];
 let editingDate = null;
@@ -70,7 +71,7 @@ function renderFeed() {
   const entries = computeEntries();
 
   if (entries.length === 0) {
-    el.innerHTML = '<p class="feed-loading">no entries yet. use the edit icon in the corner to add one.</p>';
+    el.innerHTML = '<p class="feed-loading">no entries yet. use the developer icon in the corner to add one.</p>';
     return;
   }
 
@@ -286,13 +287,13 @@ function exportLog() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'log.json';
+  a.download = FEED_URL;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 function clearLocalEdits() {
-  if (!confirm('Clear all local edits? This does not affect log.json on disk.')) return;
+  if (!confirm(`Clear all local edits? This does not affect ${FEED_URL} on disk.`)) return;
   localStorage.removeItem(LS_OVERRIDES);
   localStorage.removeItem(LS_DELETED);
   cancelEdit();
@@ -381,6 +382,15 @@ document.getElementById('edit-toggle').addEventListener('click', () => {
 });
 document.getElementById('f-add').addEventListener('click', saveEntryFromForm);
 document.getElementById('f-cancel').addEventListener('click', cancelEdit);
+document.getElementById('f-save').addEventListener('click', () => {
+  saveOverrides(loadOverrides());
+  saveDeleted(loadDeleted());
+  const btn = document.getElementById('f-save');
+  const original = btn.textContent;
+  btn.textContent = 'saved ✓';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1200);
+});
 document.getElementById('f-export').addEventListener('click', exportLog);
 document.getElementById('f-reset').addEventListener('click', clearLocalEdits);
 

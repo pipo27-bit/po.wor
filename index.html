@@ -11,15 +11,21 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-feed="log.json" data-storage="log">
 
 <header class="bar">
   <span class="brand">po.wor</span>
+  <nav class="nav">
+    <a href="index.html" aria-current="page">Log</a>
+    <a href="pouvoir.html">Pouvoir</a>
+    <a href="album.html">Album</a>
+    <a href="cinematic.html">Cinematic</a>
+  </nav>
 </header>
 
 <main>
   <div id="add-entry-panel" class="add-entry-panel">
-    <p class="add-entry-title">edit mode &mdash; entries save to this browser only</p>
+    <p class="add-entry-title">developer mode &mdash; entries save to this browser only</p>
     <div class="add-entry-grid">
       <div class="date-field">
         <input id="f-date" type="text" placeholder="yyyy-mm-dd" inputmode="none" autocomplete="off" readonly>
@@ -45,8 +51,9 @@
     <div class="add-entry-actions">
       <button id="f-add" type="button">add</button>
       <button id="f-cancel" type="button">cancel</button>
+      <button id="f-save" type="button">save</button>
       <span class="add-entry-spacer"></span>
-      <button id="f-export" type="button">export log.json</button>
+      <button id="f-export" type="button">export json</button>
       <button id="f-reset" type="button">clear local edits</button>
     </div>
   </div>
@@ -65,11 +72,12 @@
   </span>
 </footer>
 
-<!-- edit-mode toggle: a plain tool icon, not a nav item, tucked in the corner -->
-<button id="edit-toggle" aria-label="Toggle edit mode" title="Edit mode">
+<!-- developer-mode toggle: a plain tool icon, not a nav item, tucked in the corner -->
+<button id="edit-toggle" aria-label="Toggle developer mode" title="Developer mode">
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14.7 3.3a1 1 0 0 1 1.4 0l4.6 4.6a1 1 0 0 1 0 1.4L9.5 20.5 3 21l.5-6.5L14.7 3.3Z"/>
-    <path d="M13 5l6 6"/>
+    <circle cx="6" cy="7" r="2.4"/>
+    <circle cx="6" cy="17" r="2.4"/>
+    <path d="M7.8 8.6 19 19M7.8 15.4 19 5"/>
   </svg>
 </button>
 

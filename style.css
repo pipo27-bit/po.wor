@@ -24,6 +24,17 @@
   --gutter: 112px;
 }
 
+/* ---------- Pouvoir: dark titanium-silver theme ---------- */
+body.theme-pouvoir {
+  --bg: #1C1D1F;
+  --surface: #2A2B2E;
+  --text: #E8E9EA;
+  --dim: #9A9CA1;
+  --rule: #3A3B3E;
+  --accent: #C7CBD1;
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
 
 html { color-scheme: light; }
@@ -50,6 +61,11 @@ a { color: inherit; text-decoration: none; }
   max-width: var(--maxw);
   margin: 0 auto;
   padding: 40px 20px 24px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .brand {
@@ -58,6 +74,18 @@ a { color: inherit; text-decoration: none; }
   font-size: 17px;
   letter-spacing: 0.01em;
 }
+
+.nav {
+  display: flex;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.nav a:hover { color: var(--accent); }
+
+.nav a[aria-current="page"] { color: var(--text); }
 
 /* ---------- feed / log spine ---------- */
 
@@ -387,6 +415,7 @@ body.edit-mode .add-entry-panel { display: block; }
 
 .add-entry-actions button:hover { border-color: var(--accent); color: var(--accent); }
 #f-add { border-color: var(--accent); color: var(--accent); }
+.add-entry-actions button:disabled { opacity: 0.6; cursor: default; }
 
 /* ---------- footer ---------- */
 
@@ -445,11 +474,6 @@ body.edit-mode .add-entry-panel { display: block; }
   .entry {
     grid-template-columns: 1fr;
     row-gap: 6px;
-  }
-
-  .entry::before,
-  .entry-date::before {
-    display: none;
   }
 
   .entry-date { padding-top: 0; }
