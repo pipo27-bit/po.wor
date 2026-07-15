@@ -383,6 +383,8 @@ document.getElementById('edit-toggle').addEventListener('click', () => {
 document.getElementById('f-add').addEventListener('click', saveEntryFromForm);
 document.getElementById('f-cancel').addEventListener('click', cancelEdit);
 document.getElementById('f-save').addEventListener('click', () => {
+  // Every add/edit/delete already writes to localStorage immediately —
+  // this is a confirmation checkpoint, not a gate on persistence.
   saveOverrides(loadOverrides());
   saveDeleted(loadDeleted());
   const btn = document.getElementById('f-save');
