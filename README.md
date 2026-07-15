@@ -1,19 +1,43 @@
 # po.wor
 
-One page: date, one line, click to see the work. No nav, no separate pages,
-no framework.
+Four pages, one engine: date, one line, click to see the work. No framework,
+no build step.
+
+- **Log** (`index.html`) — the daily log.
+- **Pouvoir** (`pouvoir.html`) — merch design, dark titanium-silver theme.
+- **Album** (`album.html`) — music/album showcase.
+- **Cinematic** (`cinematic.html`) — photo/video showcase.
+
+Every page shares the same `style.css` and `script.js`. Each `<body>` tag
+declares which JSON file to read and which localStorage namespace to use
+via `data-feed` and `data-storage` attributes, e.g.:
+
+```html
+<body data-feed="pouvoir.json" data-storage="pouvoir">
+```
+
+`script.js` reads those attributes at load time — nothing else needs to
+change per page. A shared top nav (`.nav`, with `aria-current="page"` on
+the active link) lets you move between all four.
 
 ## Structure
 
 ```
 po.wor/
-  index.html        the whole site — one page
-  style.css          all styling — the "log spine" + edit mode
-  script.js           renders log.json, handles expand/collapse and edit mode
-  log.json             your data — every entry lives here
+  index.html      Log page
+  pouvoir.html    Pouvoir page (dark theme)
+  album.html      Album page
+  cinematic.html  Cinematic page
+  style.css       all styling — shared "log spine" look, developer mode,
+                  and the Pouvoir dark-theme overrides
+  script.js       shared engine: renders the feed named by data-feed,
+                  handles expand/collapse and developer mode
+  log.json, pouvoir.json, albums.json, cinematic.json
+                  your data — one JSON file per page, matching each
+                  page's data-feed attribute
   scripts/
-    build_log.py        optional: generate log.json from an Obsidian folder
-  assets/              put images/video referenced from log.json here
+    build_log.py  optional: generate log.json from an Obsidian folder
+  assets/         put images/video referenced from the JSON files here
 ```
 
 ## How entries work
@@ -42,21 +66,25 @@ Drop your music demo files (`.mp3`, `.wav`, etc.) into `assets/` and
 reference them with the `audio` field — the entry expands into an
 inline player.
 
-In the edit panel, the date field is a native calendar picker: click it,
-click the day you want, done — no typing dates by hand.
+In the developer-mode panel, the date field is a small custom calendar
+picker: click it, click the day you want, done — no typing dates by hand.
 
-## Edit mode
+## Developer mode
 
-Bottom-right corner: a small pencil-in-a-square icon, not a nav link. Click
-it to turn on edit mode.
+Bottom-right corner: a small scissors icon, not a nav link. Click it to
+turn on developer mode (each page remembers its own on/off state).
 
-In edit mode:
+In developer mode:
 - Every entry gets a small edit / delete icon.
 - An "add entry" panel appears above the feed for new entries.
 - Editing and deleting only change what's stored **in this browser**
-  (`localStorage`) — `log.json` on disk is never touched automatically.
-- When you're happy with your changes, click **export log.json** in the
-  panel. It downloads the merged, up-to-date file. Replace the `log.json`
+  (`localStorage`, namespaced per page via `data-storage`) — the JSON
+  file on disk is never touched automatically.
+- Click **save** to confirm your in-browser drafts are written to
+  localStorage; the button flashes "saved ✓" briefly.
+- When you're happy with your changes, click **export json** in the
+  panel. It downloads the merged, up-to-date file (named after that
+  page's `data-feed`, e.g. `pouvoir.json`). Replace the matching file
   in this folder with the download and commit it.
 - **clear local edits** wipes your in-browser drafts (does not affect the
   file on disk).
