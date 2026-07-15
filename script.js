@@ -219,7 +219,7 @@ function startEdit(entry) {
   document.getElementById('f-text').value = entry.text || '';
   document.getElementById('f-link').value = entry.link || '';
   document.getElementById('f-image').value = entry.image || '';
-  document.getElementById('f-audio').value = entry.audio || '';
+  document.getElementById('f-audio').value = entry.audio || entry.video || '';
   document.getElementById('f-detail').value = entry.detail || '';
   document.getElementById('f-add').textContent = 'save';
   document.getElementById('add-entry-panel').scrollIntoView({ block: 'nearest' });
@@ -257,7 +257,7 @@ function saveEntryFromForm() {
   if (tag) entry.tag = tag;
   if (link) entry.link = link;
   if (image) entry.image = image;
-  if (audio) entry.audio = audio;
+  if (audio) entry[STORAGE_NS === 'cinematic' ? 'video' : 'audio'] = audio;
   if (detail) entry.detail = detail;
 
   // if the date changed while editing, drop the old key first
