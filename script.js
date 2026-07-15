@@ -5,6 +5,13 @@
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
+if (location.protocol === 'file:') {
+  const warning = document.createElement('div');
+  warning.className = 'file-warning';
+  warning.textContent = 'Opened as a local file — fetching data and saving edits won’t work reliably. Run "python3 -m http.server" in this folder and open http://localhost:8000 instead.';
+  document.body.prepend(warning);
+}
+
 const STORAGE_NS = document.body.dataset.storage || 'log';
 const FEED_URL = document.body.dataset.feed || 'log.json';
 const LS_OVERRIDES = `po.wor:${STORAGE_NS}:overrides`;
