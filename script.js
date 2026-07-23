@@ -400,6 +400,7 @@ function utf8ToBase64(str) {
 
 async function githubApi(path, options = {}) {
   const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}${path}`, {
+    cache: 'no-store',
     ...options,
     headers: {
       'Authorization': `Bearer ${getToken()}`,
