@@ -2,5 +2,42 @@
   {
     "date": "2026-07-19",
     "text": "World Cup Final"
+  },
+  {
+    "date": "2026-07-15",
+    "tag": "site",
+    "text": "Started building po.wor.",
+    "detail": "One feed, one file to edit, no clutter. Built to log daily and show finished work in one place."
+  },
+  {
+    "date": "2026-06-27",
+    "tag": "music",
+    "text": "New demo: untitled sketch.",
+    "detail": "Quick Ableton sketch, rough mix. Dropped here to keep a record of it.",
+    "audio": "assets/demo.mp3"
+  },
+  {
+    "date": "2026-06-20",
+    "tag": "game",
+    "text": "Shipped 呪われた金庫 — a browser RPG.",
+    "detail": "A short browser RPG built from scratch — dialogue system, inventory, and a puzzle centered on a cursed safe. Deployed on GitHub Pages.",
+    "link": "https://pipo27-bit.github.io/GameRPGtry/"
+  },
+  {
+    "date": "2026-06-02",
+    "tag": "web",
+    "text": "Castle in the Sky site: added scroll-driven cloud transitions.",
+    "detail": "A scroll-driven immersive redesign of the school Ghibli site, inspired by SBS's 'The Boat' — CSS/DOM parallax, scroll-as-playhead, layered cloud transitions."
+  },
+  {
+    "date": "2026-05-18",
+    "tag": "app",
+    "text": "ヒマ — first working prototype of the activity feed.",
+    "detail": "An Instagram/TikTok-style app where every post is a real, location-tagged activity, with an 'I did this too' credibility mechanic. Built with React Native/Expo."
+  },
+  {
+    "date": "2026-05-01",
+    "tag": "log",
+    "text": "Rebuilt the Obsidian daily-log system."
   }
 ]

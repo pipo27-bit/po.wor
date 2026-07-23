@@ -20,6 +20,7 @@ const LS_DELETED = `po.wor:${STORAGE_NS}:deleted`;
 const LS_EDIT_MODE = `po.wor:${STORAGE_NS}:editMode`;
 
 let baseEntries = [];
+let baseEntriesLoaded = false;
 let editingDate = null;
 
 // ---------- storage helpers ----------
@@ -443,6 +444,10 @@ async function autoPublishIfNeeded() {
   if (!getToken()) return;
   const hasPendingChanges = Object.keys(loadOverrides()).length > 0 || loadDeleted().length > 0;
   if (!hasPendingChanges) return;
+  if (!baseEntriesLoaded) {
+    alert("couldn't sync to the live site: the existing entries never finished loading, so publishing now would have erased them.\n\nyour edits are still saved in this browser — refresh the page so it can load the current entries, then turn developer mode off again to publish.");
+    return;
+  }
   try {
     await publishEntries();
     renderFeed();
@@ -486,6 +491,7 @@ async function loadFeed() {
     const res = await fetch(FEED_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     baseEntries = await res.json();
+    baseEntriesLoaded = true;
     renderFeed();
   } catch (err) {
     el.innerHTML = `<p class="feed-loading">couldn't load the log (${escapeHtml(err.message)}).</p>`;
