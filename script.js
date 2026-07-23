@@ -441,6 +441,54 @@ async function githubApi(path, options = {}) {
   return res.json();
 }
 
+async function uploadFileToGitHub(file) {
+  const base64 = await fileToBase64(file);
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '-');
+  const path = `assets/${Date.now()}-${safeName}`;
+  await githubApi(`/contents/${path}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `attach: ${safeName} via po.wor developer mode`,
+      content: base64,
+      branch: GITHUB_BRANCH,
+    }),
+  });
+  return path;
+}
+
+function wireAttachField(fieldId, fileInputId) {
+  const field = document.getElementById(fieldId);
+  const fileInput = document.getElementById(fileInputId);
+  field.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    if (!getToken()) {
+      alert('connect a GitHub token first');
+      fileInput.value = '';
+      return;
+    }
+    const original = field.value;
+    field.value = 'uploading…';
+    field.disabled = true;
+    try {
+      field.value = await uploadFileToGitHub(file);
+    } catch (e) {
+      alert(`upload failed: ${e.message}`);
+      field.value = original;
+    } finally {
+      field.disabled = false;
+      fileInput.value = '';
+    }
+  });
+}
+
+function renderGithubConnectUI() {
+  const connected = !!getToken();
+  document.getElementById('gh-connect').hidden = connected;
+  document.getElementById('gh-connected').hidden = !connected;
+}
+
 // ---------- wire up ----------
 
 document.getElementById('edit-toggle').addEventListener('click', () => {
@@ -461,6 +509,22 @@ document.getElementById('f-save').addEventListener('click', () => {
 });
 document.getElementById('f-export').addEventListener('click', exportLog);
 document.getElementById('f-reset').addEventListener('click', clearLocalEdits);
+
+wireAttachField('f-image', 'f-image-file');
+wireAttachField('f-audio', 'f-audio-file');
+
+document.getElementById('f-token-save').addEventListener('click', () => {
+  const val = document.getElementById('f-token').value.trim();
+  if (!val) { alert('paste a token first'); return; }
+  setToken(val);
+  document.getElementById('f-token').value = '';
+  renderGithubConnectUI();
+});
+document.getElementById('f-token-clear').addEventListener('click', () => {
+  clearToken();
+  renderGithubConnectUI();
+});
+renderGithubConnectUI();
 
 if (localStorage.getItem(LS_EDIT_MODE) === '1') setEditMode(true);
 
