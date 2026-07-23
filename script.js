@@ -60,6 +60,9 @@ function escapeHtml(s) {
 // ---------- merge base + local edits ----------
 
 function computeEntries() {
+  if (!document.body.classList.contains('edit-mode')) {
+    return [...baseEntries].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  }
   const overrides = loadOverrides();
   const deleted = loadDeleted();
   const map = new Map();
@@ -217,6 +220,7 @@ function setEditMode(on) {
   document.getElementById('edit-toggle').setAttribute('aria-pressed', String(on));
   localStorage.setItem(LS_EDIT_MODE, on ? '1' : '0');
   if (!on) cancelEdit();
+  renderFeed();
 }
 
 function startEdit(entry) {
