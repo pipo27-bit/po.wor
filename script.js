@@ -382,6 +382,61 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !datePopover.hidden) closeDatePicker();
 });
 
+// ---------- GitHub API (publish + attach) ----------
+// Both features write directly to the live GitHub repo using a personal
+// access token stored in this browser only (never sent anywhere but
+// api.github.com). Scope the token to just this repo with only
+// "Contents: read and write" permission, and give it a real expiration —
+// anyone with access to this browser could publish while it's valid.
+
+const GITHUB_OWNER = 'pipo27-bit';
+const GITHUB_REPO = 'po.wor';
+const GITHUB_BRANCH = 'main';
+const LS_TOKEN = 'po.wor:githubToken';
+
+function getToken() {
+  return localStorage.getItem(LS_TOKEN) || '';
+}
+function setToken(token) {
+  localStorage.setItem(LS_TOKEN, token);
+}
+function clearToken() {
+  localStorage.removeItem(LS_TOKEN);
+}
+
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => { binary += String.fromCharCode(b); });
+  return btoa(binary);
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function githubApi(path, options = {}) {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}${path}`, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${getToken()}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`GitHub API ${res.status}: ${body.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
 // ---------- wire up ----------
 
 document.getElementById('edit-toggle').addEventListener('click', () => {
