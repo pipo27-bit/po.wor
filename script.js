@@ -456,6 +456,29 @@ async function uploadFileToGitHub(file) {
   return path;
 }
 
+async function publishEntries() {
+  const entries = computeEntries();
+  const content = JSON.stringify(entries, null, 2) + '\n';
+  const base64Content = utf8ToBase64(content);
+
+  const current = await githubApi(`/contents/${FEED_URL}?ref=${GITHUB_BRANCH}`);
+  const sha = current.sha;
+
+  await githubApi(`/contents/${FEED_URL}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `publish: update ${FEED_URL} from po.wor developer mode`,
+      content: base64Content,
+      sha,
+      branch: GITHUB_BRANCH,
+    }),
+  });
+
+  baseEntries = entries;
+  localStorage.removeItem(LS_OVERRIDES);
+  localStorage.removeItem(LS_DELETED);
+}
+
 function wireAttachField(fieldId, fileInputId) {
   const field = document.getElementById(fieldId);
   const fileInput = document.getElementById(fileInputId);
@@ -496,16 +519,22 @@ document.getElementById('edit-toggle').addEventListener('click', () => {
 });
 document.getElementById('f-add').addEventListener('click', saveEntryFromForm);
 document.getElementById('f-cancel').addEventListener('click', cancelEdit);
-document.getElementById('f-save').addEventListener('click', () => {
-  // Every add/edit/delete already writes to localStorage immediately —
-  // this is a confirmation checkpoint, not a gate on persistence.
-  saveOverrides(loadOverrides());
-  saveDeleted(loadDeleted());
+document.getElementById('f-save').addEventListener('click', async () => {
+  if (!getToken()) { alert('connect a GitHub token first'); return; }
   const btn = document.getElementById('f-save');
   const original = btn.textContent;
-  btn.textContent = 'saved ✓';
+  btn.textContent = 'publishing…';
   btn.disabled = true;
-  setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1200);
+  try {
+    await publishEntries();
+    renderFeed();
+    btn.textContent = 'published ✓';
+    setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1200);
+  } catch (e) {
+    btn.textContent = original;
+    btn.disabled = false;
+    alert(`publish failed: ${e.message}`);
+  }
 });
 document.getElementById('f-export').addEventListener('click', exportLog);
 document.getElementById('f-reset').addEventListener('click', clearLocalEdits);
