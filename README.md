@@ -80,13 +80,33 @@ In developer mode:
 - **Add**/**cancel** are the only actions. Every add, edit, or delete
   writes straight to this browser's `localStorage` (namespaced per page
   via `data-storage`) the moment you do it — there's no separate save
-  step. Click the scissors icon again to turn developer mode off and see
-  your page normally; your edits stay exactly as you left them.
+  step.
+- Turning developer mode back off (click the scissors icon again)
+  **auto-publishes** any pending changes straight to the live site, so
+  the same edit shows up on every device — not just the one you typed it
+  on. If publishing fails (offline, bad token), your edits stay safely
+  in this browser and it tries again the next time you turn developer
+  mode off.
 
-This is entirely local to the browser you're using — nothing you type is
-sent anywhere. The JSON file on disk isn't touched by any of this; when
-you're ready to make edits permanent, update the matching `.json` file
-directly and commit it.
+### GitHub token setup (needed once per device)
+
+Auto-publish needs a GitHub personal access token, since it writes
+directly to this repo:
+
+1. On GitHub: Settings → Developer settings → Personal access tokens →
+   Fine-grained tokens → Generate new token.
+2. Scope it to **only this repository** (`po.wor`), with **Contents:
+   read and write** permission, and set a real expiration (90 days is a
+   reasonable default).
+3. Paste it into the "GitHub token" field in developer mode and click
+   **connect** — once, per device. It's stored only in that browser's
+   `localStorage`, never sent anywhere but `api.github.com`.
+
+The token isn't validated when you connect it — an invalid or expired
+one just fails clearly (with an alert) the next time you turn developer
+mode off, and your edits stay put until you fix it. Click **disconnect**
+to remove it — without a token, edits stay local-only to that device,
+same as before.
 
 ## Add an entry (from Obsidian, instead of the browser)
 

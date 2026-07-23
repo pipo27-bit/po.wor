@@ -399,6 +399,51 @@ body.edit-mode .add-entry-panel { display: block; }
   border-color: var(--accent);
 }
 
+/* ---------- GitHub connect ---------- */
+
+.gh-connect,
+.gh-connected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.gh-connect[hidden],
+.gh-connected[hidden] { display: none; }
+
+.gh-connect input {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+}
+
+.gh-connect button,
+.gh-connected button {
+  padding: 7px 12px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.gh-connect button:hover,
+.gh-connected button:hover { border-color: var(--accent); color: var(--accent); }
+
+.gh-connected span { color: var(--dim); flex: 1; }
+
 .add-entry-grid textarea {
   grid-column: span 2;
   min-height: 60px;

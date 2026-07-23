@@ -1,7 +1,8 @@
-// po.wor — single-page feed with click-to-expand entries and a local edit mode.
-// Edit mode lives entirely in the browser (localStorage). It never touches
-// log.json on disk — when you're happy with your edits, hit "export log.json"
-// in the edit panel and replace the file in your repo with the download.
+// po.wor — feed with click-to-expand entries and a local edit mode.
+// Edits are drafted in this browser's localStorage, then auto-published to
+// the live JSON file on GitHub the moment developer mode is turned off
+// (see "GitHub sync" below) — that's what makes edits show up on every
+// device instead of just the one you typed them on.
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -216,7 +217,10 @@ function setEditMode(on) {
   document.body.classList.toggle('edit-mode', on);
   document.getElementById('edit-toggle').setAttribute('aria-pressed', String(on));
   localStorage.setItem(LS_EDIT_MODE, on ? '1' : '0');
-  if (!on) cancelEdit();
+  if (!on) {
+    cancelEdit();
+    autoPublishIfNeeded();
+  }
 }
 
 function startEdit(entry) {
@@ -363,6 +367,95 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !datePopover.hidden) closeDatePicker();
 });
 
+// ---------- GitHub sync ----------
+// Local edits live in this browser's localStorage — that's invisible to
+// any other device. To make edits show up everywhere, turning developer
+// mode off (the scissors icon) auto-publishes to the live repo via
+// GitHub's API, using a personal access token stored in this browser
+// only. Scope the token to just this repo with "Contents: read and
+// write" permission and a real expiration — anyone with access to this
+// unlocked browser could publish while it's valid.
+
+const GITHUB_OWNER = 'pipo27-bit';
+const GITHUB_REPO = 'po.wor';
+const GITHUB_BRANCH = 'main';
+const LS_TOKEN = 'po.wor:githubToken';
+
+function getToken() {
+  return localStorage.getItem(LS_TOKEN) || '';
+}
+function setToken(token) {
+  localStorage.setItem(LS_TOKEN, token);
+}
+function clearToken() {
+  localStorage.removeItem(LS_TOKEN);
+}
+
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach(b => { binary += String.fromCharCode(b); });
+  return btoa(binary);
+}
+
+async function githubApi(path, options = {}) {
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}${path}`, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${getToken()}`,
+      'Accept': 'application/vnd.github+json',
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`GitHub API ${res.status}: ${body.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
+async function publishEntries() {
+  const entries = computeEntries();
+  const content = JSON.stringify(entries, null, 2) + '\n';
+  const base64Content = utf8ToBase64(content);
+
+  const current = await githubApi(`/contents/${FEED_URL}?ref=${GITHUB_BRANCH}`);
+  const sha = current.sha;
+
+  await githubApi(`/contents/${FEED_URL}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      message: `publish: update ${FEED_URL} from po.wor developer mode`,
+      content: base64Content,
+      sha,
+      branch: GITHUB_BRANCH,
+    }),
+  });
+
+  baseEntries = entries;
+  localStorage.removeItem(LS_OVERRIDES);
+  localStorage.removeItem(LS_DELETED);
+}
+
+async function autoPublishIfNeeded() {
+  if (!getToken()) return;
+  const hasPendingChanges = Object.keys(loadOverrides()).length > 0 || loadDeleted().length > 0;
+  if (!hasPendingChanges) return;
+  try {
+    await publishEntries();
+    renderFeed();
+  } catch (e) {
+    alert(`couldn't sync to the live site: ${e.message}\n\nyour edits are still saved in this browser and will try again next time you turn developer mode off.`);
+  }
+}
+
+function renderGithubConnectUI() {
+  const connected = !!getToken();
+  document.getElementById('gh-connect').hidden = connected;
+  document.getElementById('gh-connected').hidden = !connected;
+}
+
 // ---------- wire up ----------
 
 document.getElementById('edit-toggle').addEventListener('click', () => {
@@ -370,6 +463,19 @@ document.getElementById('edit-toggle').addEventListener('click', () => {
 });
 document.getElementById('f-add').addEventListener('click', saveEntryFromForm);
 document.getElementById('f-cancel').addEventListener('click', cancelEdit);
+
+document.getElementById('f-token-save').addEventListener('click', () => {
+  const val = document.getElementById('f-token').value.trim();
+  if (!val) { alert('paste a token first'); return; }
+  setToken(val);
+  document.getElementById('f-token').value = '';
+  renderGithubConnectUI();
+});
+document.getElementById('f-token-clear').addEventListener('click', () => {
+  clearToken();
+  renderGithubConnectUI();
+});
+renderGithubConnectUI();
 
 if (localStorage.getItem(LS_EDIT_MODE) === '1') setEditMode(true);
 
