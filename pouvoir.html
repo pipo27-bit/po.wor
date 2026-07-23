@@ -25,14 +25,6 @@
 <main>
   <div id="add-entry-panel" class="add-entry-panel">
     <p class="add-entry-title">developer mode &mdash; entries save to this browser only</p>
-    <div class="gh-connect" id="gh-connect">
-      <input id="f-token" type="password" placeholder="GitHub token" autocomplete="off">
-      <button id="f-token-save" type="button">connect</button>
-    </div>
-    <div class="gh-connected" id="gh-connected" hidden>
-      <span>GitHub connected &#10003;</span>
-      <button id="f-token-clear" type="button">disconnect</button>
-    </div>
     <div class="add-entry-grid">
       <div class="date-field">
         <input id="f-date" type="text" placeholder="yyyy-mm-dd" inputmode="none" autocomplete="off" readonly>
@@ -51,23 +43,13 @@
       <input id="f-tag" placeholder="tag (optional)">
       <input id="f-text" placeholder="item name">
       <input id="f-link" placeholder="buy/store link (optional)">
-      <div class="attach-field">
-        <input id="f-image" type="text" placeholder="tap to attach a product image" readonly>
-        <input type="file" id="f-image-file" accept="image/*" hidden>
-      </div>
-      <div class="attach-field">
-        <input id="f-audio" type="text" placeholder="tap to attach audio or video" readonly>
-        <input type="file" id="f-audio-file" accept="audio/*,video/*" hidden>
-      </div>
+      <input id="f-image" placeholder="product image url (optional)">
+      <input id="f-audio" placeholder="audio url (optional, e.g. assets/demo.mp3)">
       <textarea id="f-detail" placeholder="description shown when clicked (optional)"></textarea>
     </div>
     <div class="add-entry-actions">
       <button id="f-add" type="button">add</button>
       <button id="f-cancel" type="button">cancel</button>
-      <span class="add-entry-spacer"></span>
-      <button id="f-save" type="button">publish</button>
-      <button id="f-export" type="button">export json</button>
-      <button id="f-reset" type="button">clear local edits</button>
     </div>
   </div>
 

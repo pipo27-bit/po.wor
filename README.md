@@ -3,8 +3,6 @@
 Four pages, one engine: date, one line, click to see the work. No framework,
 no build step.
 
-Live at https://pipo27-bit.github.io/po.wor/
-
 - **Log** (`index.html`) — the daily log.
 - **Pouvoir** (`pouvoir.html`) — merch design, dark titanium-silver theme.
 - **Album** (`album.html`) — music/album showcase.
@@ -76,52 +74,19 @@ picker: click it, click the day you want, done — no typing dates by hand.
 Bottom-right corner: a small scissors icon, not a nav link. Click it to
 turn on developer mode (each page remembers its own on/off state).
 
-**Developer mode on** is your private workspace — drafts (published
-entries plus anything you've added or changed but not yet published) are
-visible only to you, in this browser. **Developer mode off** shows
-exactly what's published — nothing local ever leaks through, so toggling
-it off is the same view any visitor gets.
-
 In developer mode:
 - Every entry gets a small edit / delete icon.
 - An "add entry" panel appears above the feed for new entries.
-- Editing and deleting write to **this browser only** (`localStorage`,
-  namespaced per page via `data-storage`) until you publish.
-- **Image / audio (or video) fields are file attachments.** Tap the
-  field, pick a photo or clip from your device (works from a phone's
-  camera roll, not just a desktop file browser), and it uploads straight
-  to this repo's `assets/` folder automatically — the path fills itself
-  in. No manually placing files or typing paths.
-- **Publish** commits your current entries straight to the live site via
-  GitHub's API — no export, no manual file replace, no `git push`
-  needed. GitHub Pages takes roughly a minute or two to actually rebuild
-  after that.
-- **Export json** stays as a manual, offline-friendly backup that
-  doesn't need a token — downloads the merged file to replace by hand if
-  you'd rather not publish directly.
-- **Clear local edits** wipes your in-browser drafts (does not affect
-  what's published).
+- **Add**/**cancel** are the only actions. Every add, edit, or delete
+  writes straight to this browser's `localStorage` (namespaced per page
+  via `data-storage`) the moment you do it — there's no separate save
+  step. Click the scissors icon again to turn developer mode off and see
+  your page normally; your edits stay exactly as you left them.
 
-### GitHub token setup (needed for attach + publish)
-
-Attach and Publish write directly to this repo, so they need a GitHub
-personal access token:
-
-1. On GitHub: Settings → Developer settings → Personal access tokens →
-   Fine-grained tokens → Generate new token.
-2. Scope it to **only this repository** (`po.wor`), with **Contents:
-   read and write** permission, and set a real expiration (90 days is a
-   reasonable default).
-3. Paste it into the "GitHub token" field in developer mode and click
-   **connect**. It's stored only in this browser's `localStorage` —
-   never sent anywhere but `api.github.com`.
-
-The token isn't validated when you connect it — an invalid or expired
-one just fails clearly the first time you actually attach or publish.
-Because it lives in this browser, anyone with access to this unlocked
-device/browser could publish to the site while it's valid — scoping it
-to one repo, one permission, and a real expiry limits that. Click
-**disconnect** to remove it.
+This is entirely local to the browser you're using — nothing you type is
+sent anywhere. The JSON file on disk isn't touched by any of this; when
+you're ready to make edits permanent, update the matching `.json` file
+directly and commit it.
 
 ## Add an entry (from Obsidian, instead of the browser)
 

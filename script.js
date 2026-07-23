@@ -60,9 +60,6 @@ function escapeHtml(s) {
 // ---------- merge base + local edits ----------
 
 function computeEntries() {
-  if (!document.body.classList.contains('edit-mode')) {
-    return [...baseEntries].sort((a, b) => parseDate(b.date) - parseDate(a.date));
-  }
   const overrides = loadOverrides();
   const deleted = loadDeleted();
   const map = new Map();
@@ -220,7 +217,6 @@ function setEditMode(on) {
   document.getElementById('edit-toggle').setAttribute('aria-pressed', String(on));
   localStorage.setItem(LS_EDIT_MODE, on ? '1' : '0');
   if (!on) cancelEdit();
-  renderFeed();
 }
 
 function startEdit(entry) {
@@ -288,25 +284,6 @@ function saveEntryFromForm() {
   const deleted = loadDeleted().filter(d => d !== date);
   saveDeleted(deleted);
 
-  cancelEdit();
-  renderFeed();
-}
-
-function exportLog() {
-  const entries = computeEntries().sort((a, b) => parseDate(b.date) - parseDate(a.date));
-  const blob = new Blob([JSON.stringify(entries, null, 2) + '\n'], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = FEED_URL;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function clearLocalEdits() {
-  if (!confirm(`Clear all local edits? This does not affect ${FEED_URL} on disk.`)) return;
-  localStorage.removeItem(LS_OVERRIDES);
-  localStorage.removeItem(LS_DELETED);
   cancelEdit();
   renderFeed();
 }
@@ -386,132 +363,6 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !datePopover.hidden) closeDatePicker();
 });
 
-// ---------- GitHub API (publish + attach) ----------
-// Both features write directly to the live GitHub repo using a personal
-// access token stored in this browser only (never sent anywhere but
-// api.github.com). Scope the token to just this repo with only
-// "Contents: read and write" permission, and give it a real expiration —
-// anyone with access to this browser could publish while it's valid.
-
-const GITHUB_OWNER = 'pipo27-bit';
-const GITHUB_REPO = 'po.wor';
-const GITHUB_BRANCH = 'main';
-const LS_TOKEN = 'po.wor:githubToken';
-
-function getToken() {
-  return localStorage.getItem(LS_TOKEN) || '';
-}
-function setToken(token) {
-  localStorage.setItem(LS_TOKEN, token);
-}
-function clearToken() {
-  localStorage.removeItem(LS_TOKEN);
-}
-
-function utf8ToBase64(str) {
-  const bytes = new TextEncoder().encode(str);
-  let binary = '';
-  bytes.forEach(b => { binary += String.fromCharCode(b); });
-  return btoa(binary);
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
-
-async function githubApi(path, options = {}) {
-  const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}${path}`, {
-    ...options,
-    headers: {
-      'Authorization': `Bearer ${getToken()}`,
-      'Accept': 'application/vnd.github+json',
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    },
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`GitHub API ${res.status}: ${body.slice(0, 200)}`);
-  }
-  return res.json();
-}
-
-async function uploadFileToGitHub(file) {
-  const base64 = await fileToBase64(file);
-  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '-');
-  const path = `assets/${Date.now()}-${safeName}`;
-  await githubApi(`/contents/${path}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      message: `attach: ${safeName} via po.wor developer mode`,
-      content: base64,
-      branch: GITHUB_BRANCH,
-    }),
-  });
-  return path;
-}
-
-async function publishEntries() {
-  const entries = computeEntries();
-  const content = JSON.stringify(entries, null, 2) + '\n';
-  const base64Content = utf8ToBase64(content);
-
-  const current = await githubApi(`/contents/${FEED_URL}?ref=${GITHUB_BRANCH}`);
-  const sha = current.sha;
-
-  await githubApi(`/contents/${FEED_URL}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      message: `publish: update ${FEED_URL} from po.wor developer mode`,
-      content: base64Content,
-      sha,
-      branch: GITHUB_BRANCH,
-    }),
-  });
-
-  baseEntries = entries;
-  localStorage.removeItem(LS_OVERRIDES);
-  localStorage.removeItem(LS_DELETED);
-}
-
-function wireAttachField(fieldId, fileInputId) {
-  const field = document.getElementById(fieldId);
-  const fileInput = document.getElementById(fileInputId);
-  field.addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    if (!getToken()) {
-      alert('connect a GitHub token first');
-      fileInput.value = '';
-      return;
-    }
-    const original = field.value;
-    field.value = 'uploading…';
-    field.disabled = true;
-    try {
-      field.value = await uploadFileToGitHub(file);
-    } catch (e) {
-      alert(`upload failed: ${e.message}`);
-      field.value = original;
-    } finally {
-      field.disabled = false;
-      fileInput.value = '';
-    }
-  });
-}
-
-function renderGithubConnectUI() {
-  const connected = !!getToken();
-  document.getElementById('gh-connect').hidden = connected;
-  document.getElementById('gh-connected').hidden = !connected;
-}
-
 // ---------- wire up ----------
 
 document.getElementById('edit-toggle').addEventListener('click', () => {
@@ -519,41 +370,6 @@ document.getElementById('edit-toggle').addEventListener('click', () => {
 });
 document.getElementById('f-add').addEventListener('click', saveEntryFromForm);
 document.getElementById('f-cancel').addEventListener('click', cancelEdit);
-document.getElementById('f-save').addEventListener('click', async () => {
-  if (!getToken()) { alert('connect a GitHub token first'); return; }
-  const btn = document.getElementById('f-save');
-  const original = btn.textContent;
-  btn.textContent = 'publishing…';
-  btn.disabled = true;
-  try {
-    await publishEntries();
-    renderFeed();
-    btn.textContent = 'published ✓';
-    setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1200);
-  } catch (e) {
-    btn.textContent = original;
-    btn.disabled = false;
-    alert(`publish failed: ${e.message}`);
-  }
-});
-document.getElementById('f-export').addEventListener('click', exportLog);
-document.getElementById('f-reset').addEventListener('click', clearLocalEdits);
-
-wireAttachField('f-image', 'f-image-file');
-wireAttachField('f-audio', 'f-audio-file');
-
-document.getElementById('f-token-save').addEventListener('click', () => {
-  const val = document.getElementById('f-token').value.trim();
-  if (!val) { alert('paste a token first'); return; }
-  setToken(val);
-  document.getElementById('f-token').value = '';
-  renderGithubConnectUI();
-});
-document.getElementById('f-token-clear').addEventListener('click', () => {
-  clearToken();
-  renderGithubConnectUI();
-});
-renderGithubConnectUI();
 
 if (localStorage.getItem(LS_EDIT_MODE) === '1') setEditMode(true);
 
