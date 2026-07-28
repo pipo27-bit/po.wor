@@ -3,6 +3,12 @@
 // the live JSON file on GitHub the moment developer mode is turned off
 // (see "GitHub sync" below) — that's what makes edits show up on every
 // device instead of just the one you typed them on.
+//
+// IMPORTANT: every HTML page loads this file as "script.js?v=N" (same for
+// style.css). Browsers cache these aggressively with no versioning, so
+// whenever this file (or style.css) changes, bump ?v=N in all four HTML
+// pages — otherwise devices silently keep running the old cached code,
+// which is exactly what caused a real data-loss bug once already.
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
