@@ -20,7 +20,6 @@
   --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --display: 'Space Grotesk', 'IBM Plex Mono', ui-monospace, sans-serif;
 
-  --maxw: 720px;
   --gutter: 112px;
 }
 
@@ -69,8 +68,6 @@ a { color: inherit; text-decoration: none; }
 /* ---------- top bar ---------- */
 
 .bar {
-  max-width: var(--maxw);
-  margin: 0 auto;
   padding: 40px 20px 24px;
   display: flex;
   align-items: baseline;
@@ -114,8 +111,6 @@ a { color: inherit; text-decoration: none; }
 /* ---------- feed / log spine ---------- */
 
 main {
-  max-width: var(--maxw);
-  margin: 0 auto;
   padding: 8px 20px 40px;
 }
 
@@ -490,8 +485,6 @@ body.edit-mode .add-entry-panel { display: block; }
 /* ---------- footer ---------- */
 
 .foot {
-  max-width: var(--maxw);
-  margin: 0 auto;
   padding: 24px 20px 60px;
   display: flex;
   justify-content: space-between;
