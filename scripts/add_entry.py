@@ -38,7 +38,7 @@ ASSETS = ROOT / "assets"
 
 # File types the site can show, grouped by the field name log.json uses.
 MEDIA_TYPES = {
-    "image": {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif"},
+    "image": {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".avif", ".heic"},
     "audio": {".mp3", ".wav", ".m4a", ".ogg", ".aac", ".flac"},
     "video": {".mp4", ".mov", ".webm", ".m4v"},
 }
