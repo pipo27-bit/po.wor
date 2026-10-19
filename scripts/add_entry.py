@@ -10,11 +10,12 @@ Fill in the form and click "Save entry". The entry goes into log.json
 into the assets/ folder and linked from the entry. Then commit and push
 in VS Code to publish.
 
-Two rules come from the website itself (script.js):
-  - it shows ONE entry per date, so saving a second entry for the same
-    day asks whether to replace the first;
-  - it shows ONE media file per entry, so the window lets you attach one
-    file (images, then video, then audio are what the page looks for).
+You can add as many entries as you like for the same day. The newest one
+you add shows first within that day.
+
+One rule comes from the website itself (script.js): it shows ONE media
+file per entry, so the window lets you attach one file (the page looks
+for an image first, then video, then audio).
 """
 
 import filecmp
@@ -56,7 +57,11 @@ def load_entries():
 
 
 def save_entries(entries):
-    """Write entries to log.json, newest date first."""
+    """Write entries to log.json, newest date first.
+
+    Entries on the same date keep their order (sort is stable), so the one
+    at the top of the list shows first on that day.
+    """
     entries.sort(key=lambda e: e["date"], reverse=True)
     text = json.dumps(entries, indent=2, ensure_ascii=False) + "\n"
     LOG_JSON.write_text(text, encoding="utf-8")
@@ -249,12 +254,6 @@ class App:
             return
 
         entries = load_entries()
-        existing = next((e for e in entries if e["date"] == entry_date), None)
-        if existing and not messagebox.askyesno(
-            "Replace entry?",
-            f'{entry_date} already has an entry:\n\n"{existing["text"]}"\n\nReplace it?',
-        ):
-            return
 
         if self.media_path:
             size_mb = self.media_path.stat().st_size / 1024 / 1024
@@ -277,9 +276,7 @@ class App:
             messagebox.showerror("Couldn't save", str(err))
             return
 
-        if existing:
-            entries.remove(existing)
-        entries.append(entry)
+        entries.insert(0, entry)  # newest on top, also among entries of the same day
         save_entries(entries)
 
         self.status_var.set(
