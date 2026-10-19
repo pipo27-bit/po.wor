@@ -9,16 +9,18 @@ no build step.
 - **Cinematic** (`cinematic.html`) — photo/video showcase.
 
 Every page shares the same `style.css` and `script.js`. Each `<body>` tag
-declares which JSON file to read and which localStorage namespace to use
-via `data-feed` and `data-storage` attributes, e.g.:
+declares which JSON file to read via a `data-feed` attribute, e.g.:
 
 ```html
-<body data-feed="pouvoir.json" data-storage="pouvoir">
+<body data-feed="pouvoir.json">
 ```
 
-`script.js` reads those attributes at load time — nothing else needs to
+`script.js` reads that attribute at load time — nothing else needs to
 change per page. A shared top nav (`.nav`, with `aria-current="page"` on
 the active link) lets you move between all four.
+
+The site is **read-only**: it only displays what is in the JSON files.
+You change content by editing those files, then committing and pushing.
 
 ## Structure
 
@@ -28,14 +30,15 @@ po.wor/
   pouvoir.html    Pouvoir page (dark theme)
   album.html      Album page
   cinematic.html  Cinematic page
-  style.css       all styling — shared "log spine" look, developer mode,
-                  and the Pouvoir dark-theme overrides
-  script.js       shared engine: renders the feed named by data-feed,
-                  handles expand/collapse and developer mode
+  style.css       all styling — shared "log spine" look and the Pouvoir
+                  dark-theme overrides
+  script.js       shared engine: fetches the feed named by data-feed,
+                  sorts it newest first, renders it, handles expand/collapse
   log.json, pouvoir.json, albums.json, cinematic.json
                   your data — one JSON file per page, matching each
                   page's data-feed attribute
   scripts/
+    add_entry.py  add one entry to log.json from the terminal
     build_log.py  optional: generate log.json from an Obsidian folder
   assets/         put images/video referenced from the JSON files here
 ```
@@ -66,49 +69,32 @@ Drop your music demo files (`.mp3`, `.wav`, etc.) into `assets/` and
 reference them with the `audio` field — the entry expands into an
 inline player.
 
-In the developer-mode panel, the date field is a small custom calendar
-picker: click it, click the day you want, done — no typing dates by hand.
+## Add an entry
 
-## Developer mode
+From the project folder:
 
-Bottom-right corner: a small scissors icon, not a nav link. Click it to
-turn on developer mode (each page remembers its own on/off state).
+```
+python3 scripts/add_entry.py
+```
 
-In developer mode:
-- Every entry gets a small edit / delete icon.
-- An "add entry" panel appears above the feed for new entries.
-- **Add**/**cancel** are the only actions. Every add, edit, or delete
-  writes straight to this browser's `localStorage` (namespaced per page
-  via `data-storage`) the moment you do it — there's no separate save
-  step.
-- Turning developer mode back off (click the scissors icon again)
-  **auto-publishes** any pending changes straight to the live site, so
-  the same edit shows up on every device — not just the one you typed it
-  on. If publishing fails (offline, bad token), your edits stay safely
-  in this browser and it tries again the next time you turn developer
-  mode off.
+It asks for the date (Enter = today), a one-line summary, and optional tag,
+detail, link and image. It saves the entry into `log.json` (newest first)
+and prints your current streak. The site shows one entry per date, so if
+that date already has an entry the script asks before replacing it.
 
-### GitHub token setup (needed once per device)
+You can also edit `log.json` (or the other JSON files) by hand.
 
-Auto-publish needs a GitHub personal access token, since it writes
-directly to this repo:
+## Publish
 
-1. On GitHub: Settings → Developer settings → Personal access tokens →
-   Fine-grained tokens → Generate new token.
-2. Scope it to **only this repository** (`po.wor`), with **Contents:
-   read and write** permission, and set a real expiration (90 days is a
-   reasonable default).
-3. Paste it into the "GitHub token" field in developer mode and click
-   **connect** — once, per device. It's stored only in that browser's
-   `localStorage`, never sent anywhere but `api.github.com`.
+Edit locally, preview, then push — GitHub Pages republishes by itself.
 
-The token isn't validated when you connect it — an invalid or expired
-one just fails clearly (with an alert) the next time you turn developer
-mode off, and your edits stay put until you fix it. Click **disconnect**
-to remove it — without a token, edits stay local-only to that device,
-same as before.
+1. Pull the latest: `git pull` (or **Sync Changes** in VS Code).
+2. Preview: `python3 -m http.server 8000`, open `http://localhost:8000`.
+3. Make your change (an entry, some CSS, a new feature) and check it works.
+4. Commit and push (Source Control panel: **Commit**, then **Sync Changes**).
+5. Wait a minute or two, then hard refresh the live site (Cmd+Shift+R).
 
-## Add an entry (from Obsidian, instead of the browser)
+## Add entries from Obsidian (alternative)
 
 If you'd rather your daily Obsidian log be the source of truth directly:
 keep one markdown file per day in a folder (e.g. `Log/2026-07-16.md`) with
@@ -156,5 +142,5 @@ domain, add a `CNAME` file at the project root with the domain name.
 
 - Colors, fonts, and spacing are CSS custom properties at the top of
   `style.css` — change the palette in one place.
-- No build step, no dependencies.
+- No build step, no dependencies, nothing stored in the browser.
 - Respects `prefers-reduced-motion` and is keyboard-navigable.
