@@ -61,7 +61,8 @@ line, not clickable.
 ```
 
 Required: `date` (`YYYY-MM-DD`, ISO format) and `text`. Everything else
-is optional. Newest date renders first automatically. On the page, dates
+is optional. Newest date renders first automatically; entries that share a
+date keep their order in the file (top = shown first). On the page, dates
 display as `WED-16-07-2026` — the weekday is calculated automatically
 from the ISO date, you never type it.
 
@@ -77,10 +78,17 @@ From the project folder:
 python3 scripts/add_entry.py
 ```
 
-It asks for the date (Enter = today), a one-line summary, and optional tag,
-detail, link and image. It saves the entry into `log.json` (newest first)
-and prints your current streak. The site shows one entry per date, so if
-that date already has an entry the script asks before replacing it.
+A small window opens. Fill in the date (today by default), a one-line
+summary, and optionally a tag, a longer detail, a link, and one image,
+audio or video file. Click **Save entry** (or press Cmd+Enter). The entry
+goes into `log.json`, and an attached file is copied into `assets/`.
+
+You can add several entries for the same day; the newest one you add shows
+first within that day. The site shows one media file per entry (image,
+else video, else audio). Files over 50 MB get a warning and files over
+100 MB are refused, because GitHub limits them.
+
+The window needs tkinter, which comes with Python from python.org.
 
 You can also edit `log.json` (or the other JSON files) by hand.
 
