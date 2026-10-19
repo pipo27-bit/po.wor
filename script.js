@@ -49,11 +49,11 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-// One entry per date (the last one in the file wins), newest first.
+// Newest date first. Entries that share a date keep the order they have in
+// the file (the one higher up shows first). Array.sort is stable, so this
+// is guaranteed.
 function prepareEntries(rawEntries) {
-  const byDate = new Map();
-  rawEntries.forEach(e => byDate.set(e.date, e));
-  return [...byDate.values()].sort((a, b) => parseDate(b.date) - parseDate(a.date));
+  return [...rawEntries].sort((a, b) => parseDate(b.date) - parseDate(a.date));
 }
 
 // ---------- render ----------
