@@ -8,6 +8,10 @@ no build step.
 - **Album** (`album.html`) — music/album showcase.
 - **Cinematic** (`cinematic.html`) — photo/video showcase.
 
+The Log is a dated list. Pouvoir, Album and Cinematic are **cover grids**: a
+wall of square pictures with a title and subtitle under each, like Apple
+Music's Albums view. Click a cover to open it large.
+
 Every page shares the same `style.css` and `script.js`. Each `<body>` tag
 declares which JSON file to read via a `data-feed` attribute, e.g.:
 
@@ -15,8 +19,9 @@ declares which JSON file to read via a `data-feed` attribute, e.g.:
 <body data-feed="pouvoir.json">
 ```
 
-`script.js` reads that attribute at load time — nothing else needs to
-change per page. A shared top nav (`.nav`, with `aria-current="page"` on
+A page picks its look with `data-layout="grid"` on the same tag (leave it out
+for the dated list). `script.js` reads these attributes at load time — nothing
+else needs to change per page. A shared top nav (`.nav`, with `aria-current="page"` on
 the active link) lets you move between all four.
 
 The site is **read-only**: it only displays what is in the JSON files.
@@ -38,7 +43,7 @@ po.wor/
                   your data — one JSON file per page, matching each
                   page's data-feed attribute
   scripts/
-    add_entry.py  add one entry to log.json from the terminal
+    add_entry.py  small window: add an entry to any of the four pages
     build_log.py  optional: generate log.json from an Obsidian folder
   assets/         put images/video referenced from the JSON files here
 ```
@@ -66,6 +71,24 @@ date keep their order in the file (top = shown first). On the page, dates
 display as `WED-16-07-2026` — the weekday is calculated automatically
 from the ISO date, you never type it.
 
+## Cover grids (Pouvoir, Album, Cinematic)
+
+These pages use the same JSON fields as the log, read like this:
+
+| field      | shows as                                   |
+|------------|--------------------------------------------|
+| `text`     | the title under the cover                  |
+| `tag`      | the subtitle under the title (optional)    |
+| `image`    | the cover picture                          |
+| `video`    | the cover when there is no image (first frame) |
+| `audio`    | a plain tile with a note, plus a player when opened |
+| `detail`, `link` | shown when you click the cover        |
+| `date`     | sets the order (newest first); shown when opened |
+
+No `image`, `video` or `audio`? You get a plain tile with the title's first
+letter. Use JPEG or PNG for covers: Chrome can't show HEIC files, so convert
+iPhone photos first.
+
 Drop your music demo files (`.mp3`, `.wav`, etc.) into `assets/` and
 reference them with the `audio` field — the entry expands into an
 inline player.
@@ -78,10 +101,12 @@ From the project folder:
 python3 scripts/add_entry.py
 ```
 
-A small window opens. Fill in the date (today by default), a one-line
-summary, and optionally a tag, a longer detail, a link, and one image,
-audio or video file. Click **Save entry** (or press Cmd+Enter). The entry
-goes into `log.json`, and an attached file is copied into `assets/`.
+A small window opens. Pick the **Page** (Log, Pouvoir, Album or Cinematic),
+then fill in the date (today by default), a one-line summary, and optionally
+a tag, a longer detail, a link, and one image, audio or video file. On the
+three grid pages the labels change to **Title**, **Subtitle** and **Cover**.
+Click **Save entry** (or press Cmd+Enter). The entry goes into that page's
+JSON file, and an attached file is copied into `assets/`.
 
 You can add several entries for the same day; the newest one you add shows
 first within that day. The site shows one media file per entry (image,
@@ -90,7 +115,7 @@ else video, else audio). Files over 50 MB get a warning and files over
 
 The window needs tkinter, which comes with Python from python.org.
 
-You can also edit `log.json` (or the other JSON files) by hand.
+You can also edit the JSON files by hand.
 
 ## Publish
 
