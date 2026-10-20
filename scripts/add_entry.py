@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
-po.wor — add an entry to log.json from a small window.
+po.wor — add an entry to any page of the site from a small window.
 
 Run it from the project folder:
     python3 scripts/add_entry.py
 
-Fill in the form and click "Save entry". The entry goes into log.json
-(newest first). If you attach an image, audio or video file, it is copied
+Pick the page (Log, Pouvoir, Album or Cinematic), fill in the form and
+click "Save entry". The entry goes into that page's JSON file (newest first).
+On the Log page an entry is a dated line. On Pouvoir, Album and Cinematic it
+becomes a cover in the grid: the "Title" sits under the picture, the
+"Subtitle" under the title, and the attached image is the cover. If you attach an image, audio or video file, it is copied
 into the assets/ folder and linked from the entry. Then commit and push
 in VS Code to publish.
 
@@ -35,6 +38,14 @@ except ImportError:  # some Python installs don't include tkinter
 # The project root is one folder above this script.
 ROOT = Path(__file__).resolve().parent.parent
 LOG_JSON = ROOT / "log.json"
+
+# The pages you can add to. "grid" pages show covers instead of a dated list.
+PAGES = {
+    "Log": {"file": LOG_JSON, "grid": False},
+    "Pouvoir": {"file": ROOT / "pouvoir.json", "grid": True},
+    "Album": {"file": ROOT / "albums.json", "grid": True},
+    "Cinematic": {"file": ROOT / "cinematic.json", "grid": True},
+}
 ASSETS = ROOT / "assets"
 
 # File types the site can show, grouped by the field name log.json uses.
@@ -49,22 +60,23 @@ MAX_MB = 100   # GitHub refuses files bigger than this
 
 # ---------- the data side (no window needed) ----------
 
-def load_entries():
-    """Read log.json and return a list of entries (empty list if no file yet)."""
-    if LOG_JSON.exists():
-        return json.loads(LOG_JSON.read_text(encoding="utf-8"))
+def load_entries(path=None):
+    """Read a JSON file (log.json by default) and return its list of entries."""
+    path = path or LOG_JSON
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
     return []
 
 
-def save_entries(entries):
-    """Write entries to log.json, newest date first.
+def save_entries(entries, path=None):
+    """Write entries to a JSON file (log.json by default), newest date first.
 
     Entries on the same date keep their order (sort is stable), so the one
     at the top of the list shows first on that day.
     """
     entries.sort(key=lambda e: e["date"], reverse=True)
     text = json.dumps(entries, indent=2, ensure_ascii=False) + "\n"
-    LOG_JSON.write_text(text, encoding="utf-8")
+    (path or LOG_JSON).write_text(text, encoding="utf-8")
 
 
 def current_streak(entries):
@@ -144,8 +156,6 @@ class App:
     def __init__(self, root):
         self.root = root
         self.media_path = None
-        entries = load_entries()
-        tags = sorted({e["tag"] for e in entries if e.get("tag")})
 
         root.title("po.wor — new entry")
         root.resizable(False, False)
@@ -153,6 +163,7 @@ class App:
         frame.grid()
 
         # Variables that hold what you type.
+        self.page_var = tk.StringVar(value="Log")
         self.date_var = tk.StringVar(value=date.today().isoformat())
         self.tag_var = tk.StringVar()
         self.text_var = tk.StringVar()
@@ -161,37 +172,46 @@ class App:
         self.status_var = tk.StringVar()
 
         def label(row, text):
-            ttk.Label(frame, text=text).grid(row=row, column=0, sticky="ne", padx=(0, 10), pady=4)
+            lab = ttk.Label(frame, text=text)
+            lab.grid(row=row, column=0, sticky="ne", padx=(0, 10), pady=4)
+            return lab
 
-        label(0, "Date")
-        ttk.Entry(frame, textvariable=self.date_var, width=14).grid(row=0, column=1, sticky="w", pady=4)
+        label(0, "Page")
+        self.page_box = ttk.Combobox(
+            frame, textvariable=self.page_var, values=list(PAGES), width=14, state="readonly")
+        self.page_box.grid(row=0, column=1, sticky="w", pady=4)
+        self.page_box.bind("<<ComboboxSelected>>", lambda event: self.on_page_change())
 
-        label(1, "Tag")
-        ttk.Combobox(frame, textvariable=self.tag_var, values=tags, width=14).grid(row=1, column=1, sticky="w", pady=4)
+        label(1, "Date")
+        ttk.Entry(frame, textvariable=self.date_var, width=14).grid(row=1, column=1, sticky="w", pady=4)
 
-        label(2, "One line")
+        self.tag_label = label(2, "Tag")
+        self.tag_box = ttk.Combobox(frame, textvariable=self.tag_var, width=30)
+        self.tag_box.grid(row=2, column=1, sticky="w", pady=4)
+
+        self.text_label = label(3, "One line")
         self.text_entry = ttk.Entry(frame, textvariable=self.text_var, width=52)
-        self.text_entry.grid(row=2, column=1, columnspan=2, sticky="we", pady=4)
+        self.text_entry.grid(row=3, column=1, columnspan=2, sticky="we", pady=4)
 
-        label(3, "Detail")
+        label(4, "Detail")
         self.detail_box = tk.Text(frame, width=52, height=5, wrap="word")
-        self.detail_box.grid(row=3, column=1, columnspan=2, pady=4)
+        self.detail_box.grid(row=4, column=1, columnspan=2, pady=4)
 
-        label(4, "Link")
-        ttk.Entry(frame, textvariable=self.link_var, width=52).grid(row=4, column=1, columnspan=2, sticky="we", pady=4)
+        label(5, "Link")
+        ttk.Entry(frame, textvariable=self.link_var, width=52).grid(row=5, column=1, columnspan=2, sticky="we", pady=4)
 
-        label(5, "Media")
+        self.media_label = label(6, "Media")
         media_row = ttk.Frame(frame)
-        media_row.grid(row=5, column=1, columnspan=2, sticky="w", pady=4)
+        media_row.grid(row=6, column=1, columnspan=2, sticky="w", pady=4)
         ttk.Button(media_row, text="Choose file…", command=self.choose_media).pack(side="left")
         ttk.Button(media_row, text="Clear", command=self.clear_media).pack(side="left", padx=6)
         ttk.Label(media_row, textvariable=self.media_var).pack(side="left", padx=6)
 
         ttk.Label(frame, textvariable=self.status_var, wraplength=420).grid(
-            row=6, column=0, columnspan=3, sticky="w", pady=(8, 0))
+            row=7, column=0, columnspan=3, sticky="w", pady=(8, 0))
 
         buttons = ttk.Frame(frame)
-        buttons.grid(row=7, column=0, columnspan=3, sticky="e", pady=(12, 0))
+        buttons.grid(row=8, column=0, columnspan=3, sticky="e", pady=(12, 0))
         ttk.Button(buttons, text="Close", command=root.destroy).pack(side="right")
         ttk.Button(buttons, text="Save entry", command=self.save).pack(side="right", padx=8)
 
@@ -206,7 +226,26 @@ class App:
         root.lift()
         root.attributes("-topmost", True)
         root.after(300, lambda: root.attributes("-topmost", False))
+        self.on_page_change()
         self.text_entry.focus_set()
+
+    def page(self):
+        return PAGES[self.page_var.get()]
+
+    def on_page_change(self):
+        """Relabel the form and refresh the tag list for the chosen page."""
+        page = self.page()
+        if page["grid"]:
+            self.text_label.config(text="Title")
+            self.tag_label.config(text="Subtitle")
+            self.media_label.config(text="Cover")
+        else:
+            self.text_label.config(text="One line")
+            self.tag_label.config(text="Tag")
+            self.media_label.config(text="Media")
+        tags = sorted({e["tag"] for e in load_entries(page["file"]) if e.get("tag")})
+        self.tag_box.config(values=tags)
+        self.status_var.set("")
 
     def choose_media(self):
         extensions = sorted(ext for group in MEDIA_TYPES.values() for ext in group)
@@ -239,7 +278,13 @@ class App:
         self.link_var.set("")
         self.detail_box.delete("1.0", "end")
         self.clear_media()
+        self.on_page_change_keep_status()
         self.text_entry.focus_set()
+
+    def on_page_change_keep_status(self):
+        status = self.status_var.get()
+        self.on_page_change()
+        self.status_var.set(status)
 
     def save(self):
         entry_date = self.date_var.get().strip()
@@ -253,7 +298,8 @@ class App:
             messagebox.showerror("Can't save yet", error)
             return
 
-        entries = load_entries()
+        page = self.page()
+        entries = load_entries(page["file"])
 
         if self.media_path:
             size_mb = self.media_path.stat().st_size / 1024 / 1024
@@ -277,12 +323,13 @@ class App:
             return
 
         entries.insert(0, entry)  # newest on top, also among entries of the same day
-        save_entries(entries)
+        save_entries(entries, page["file"])
 
-        self.status_var.set(
-            f"Saved ✓  {len(entries)} entries, streak {current_streak(entries)} day(s). "
-            "Now commit and push in VS Code."
-        )
+        if page["grid"]:
+            done = f"Saved ✓  {len(entries)} on {self.page_var.get()}."
+        else:
+            done = f"Saved ✓  {len(entries)} entries, streak {current_streak(entries)} day(s)."
+        self.status_var.set(done + " Now commit and push in VS Code.")
         self.clear_form()
 
 
